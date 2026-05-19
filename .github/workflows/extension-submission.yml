@@ -1,33 +1,35 @@
 name: Extension Submission
 
+# on:
+#   issues:
+#     types: [labeled]
+#   workflow_dispatch:
+#     inputs:
+#       registry_url:
+#         description: "URL to the extension's registry.json"
+#         required: true
+#       source_repo:
+#         description: "GitHub repository URL"
+#         required: true
+#       author:
+#         description: "Author name"
+#         required: true
+#       author_url:
+#         description: "Author GitHub URL"
+#         required: true
+#       author_type:
+#         description: "Microsoft or Community"
+#         required: true
+#         default: "Community"
+#         type: choice
+#         options:
+#           - Community
+#           - Microsoft
+#       website:
+#         description: "Extension documentation website URL (optional)"
+#         required: false
 on:
-  issues:
-    types: [labeled]
-  workflow_dispatch:
-    inputs:
-      registry_url:
-        description: "URL to the extension's registry.json"
-        required: true
-      source_repo:
-        description: "GitHub repository URL"
-        required: true
-      author:
-        description: "Author name"
-        required: true
-      author_url:
-        description: "Author GitHub URL"
-        required: true
-      author_type:
-        description: "Microsoft or Community"
-        required: true
-        default: "Community"
-        type: choice
-        options:
-          - Community
-          - Microsoft
-      website:
-        description: "Extension documentation website URL (optional)"
-        required: false
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -42,16 +44,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Parse issue body
         id: parse
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         env:
           ISSUE_BODY: ${{ github.event.issue.body || '' }}
           INPUT_REGISTRY_URL: ${{ inputs.registry_url }}
@@ -123,7 +125,7 @@ jobs:
 
       - name: Comment on validation failure
         if: steps.validate.outputs.valid == 'false' && github.event_name != 'workflow_dispatch'
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           script: |
             await github.rest.issues.createComment({
@@ -138,7 +140,7 @@ jobs:
       - name: Update extensions.json
         id: update
         if: steps.validate.outputs.valid == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         env:
           VALIDATION_RESULT: ${{ steps.validate.outputs.result }}
           EXT_AUTHOR: ${{ steps.parse.outputs.author }}
@@ -152,17 +154,7 @@ jobs:
             const fs = require('fs');
             const path = require('path');
             
-            function validateUrl(value, label) {
-              if (!value) return;
-              try {
-                const u = new URL(value);
-                if (!['http:', 'https:'].includes(u.protocol)) {
-                  throw new Error(`unsafe protocol "${u.protocol}"`);
-                }
-              } catch (err) {
-                throw new Error(`Invalid ${label} URL "${value}": ${err.message}`);
-              }
-            }
+            const { validateUrl } = require('./.github/scripts/url-validation');
             
             const extensionsPath = path.join('website', 'static', 'extensions.json');
             const extensions = JSON.parse(fs.readFileSync(extensionsPath, 'utf8'));
@@ -178,7 +170,17 @@ jobs:
             // Validate all user-provided URLs
             validateUrl(authorUrl, 'author');
             validateUrl(sourceRepo, 'source repo');
-            validateUrl(website, 'website');
+            // Website can be on any domain (e.g. *.github.io), so only check protocol
+            if (website) {
+              try {
+                const u = new URL(website);
+                if (!['http:', 'https:'].includes(u.protocol)) {
+                  throw new Error('unsafe protocol');
+                }
+              } catch (err) {
+                throw new Error('Invalid website URL: ' + err.message);
+              }
+            }
             validateUrl(registryUrl, 'registry');
             
             let added = [];
@@ -229,7 +231,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.validate.outputs.valid == 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1  # v8.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Add extension(s) from ${{ github.event_name == 'workflow_dispatch' && 'manual dispatch' || format('issue #{0}', github.event.issue.number) }}"
@@ -247,7 +249,7 @@ jobs:
 
       - name: Comment on success
         if: steps.validate.outputs.valid == 'true' && github.event_name != 'workflow_dispatch'
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           script: |
             await github.rest.issues.createComment({

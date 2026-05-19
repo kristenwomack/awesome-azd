@@ -3,21 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { SearchBox } from "@fluentui/react/lib/SearchBox";
 import ExecutionEnvironment from "@docusaurus/ExecutionEnvironment";
 import { useHistory, useLocation } from "@docusaurus/router";
 import { Text, Link as FluentUILink } from "@fluentui/react-components";
+import { galleryTemplates as allTemplates } from "@site/src/data/users";
 import styles from "./styles.module.css";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import { useColorMode } from "@docusaurus/theme-common";
+import Clarity from "@microsoft/clarity";
+
 
 const TITLES: Record<string, string> = {
-  templates: "Template Library",
-  extensions: "Extension Gallery",
+  templates: "From code to cloud in minutes",
+  extensions: "Extension Gallery (Preview)",
 };
 const DESCRIPTIONS: Record<string, string> = {
-  templates: "An open-source template gallery to get started with Azure.",
+  templates: "Production-ready templates with infrastructure, CI/CD, and monitoring — all deployable with a single command.",
   extensions: "Discover azd extensions that add new capabilities to your workflow.",
 };
 const PLACEHOLDERS: Record<string, string> = {
@@ -56,18 +59,79 @@ function FilterBar(): React.JSX.Element {
   useEffect(() => {
     setValue(readSearchName(location.search));
   }, [location]);
-  InputValue = value;
+  // InputValue reflects the committed (URL-based) search, not the in-progress
+  // typed text. Consumers use it to display "No results for 'X'" which should
+  // match the active filter applied to the gallery.
+  InputValue = readSearchName(location.search);
   const contentType = new URLSearchParams(location.search).get("type") || "templates";
   const placeholder = PLACEHOLDERS[contentType] || PLACEHOLDERS.templates;
+
+  // Log the search query to Clarity only when the user explicitly submits the
+  // search. Clarity masks form inputs by default, so search text is never
+  // recorded in session replays unless explicitly emitted via setTag/event.
+  // The query is sanitized before being sent: emails, URLs, and GUIDs are
+  // redacted and the value is truncated to a fixed length so the literal text
+  // stored in Clarity tags cannot retain sensitive identifiers users may have
+  // pasted into the search box.
+  // Because Clarity.setTag replaces the tag's value on each call, we accumulate
+  // the sanitized queries in a ref and pass the full (capped) array every time
+  // so Clarity retains the full sequence of searches in the session rather than
+  // just the most recent one.
+  const MAX_QUERY_LENGTH = 100;
+  const MAX_QUERY_HISTORY = 20;
+  const searchHistoryRef = useRef<string[]>([]);
+
+  // Reset search history when the content type changes (e.g., switching between
+  // templates and extensions) so sessions don't mix unrelated query sequences.
+  useEffect(() => {
+    searchHistoryRef.current = [];
+  }, [contentType]);
+  const sanitizeSearchQuery = useCallback((raw: string) => {
+    return raw
+      .toLowerCase()
+      .replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, "[email]")
+      .replace(/\bhttps?:\/\/\S+/g, "[url]")
+      .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/g, "[guid]")
+      .slice(0, MAX_QUERY_LENGTH);
+  }, []);
+  const logSearchToClarity = useCallback((query: string | null) => {
+    if (!ExecutionEnvironment.canUseDOM) return;
+    const trimmed = (query ?? "").trim();
+    if (trimmed.length < 2) return;
+    const wcpConsent = (window as any).WcpConsent?.siteConsent;
+    const consent = wcpConsent?.getConsent?.();
+    if (!consent?.Analytics) return;
+    try {
+      const eventName = contentType === "extensions" ? "extension_search" : "template_search";
+      const sanitized = sanitizeSearchQuery(trimmed);
+      const history = searchHistoryRef.current;
+      history.push(sanitized);
+      if (history.length > MAX_QUERY_HISTORY) {
+        history.splice(0, history.length - MAX_QUERY_HISTORY);
+      }
+      Clarity.event(eventName);
+      Clarity.setTag("search_query", history.slice());
+      Clarity.setTag("search_type", contentType);
+    } catch (err) {
+      // Consent has already been verified above, so reaching this catch implies
+      // an unexpected Clarity SDK failure (e.g., the script was blocked after
+      // init or an API contract change). Log at debug level for visibility
+      // without surfacing noise to end users.
+      console.debug("Failed to log search to Clarity", err);
+    }
+  }, [contentType, sanitizeSearchQuery]);
+
   return (
     <>
       <SearchBox
         styles={{
           root: {
-            border: "1px solid #D1D1D1",
+            border: "1px solid var(--site-color-border)",
             height: "52px",
-            maxWidth: "740px",
-            borderRadius: "4px",
+            maxWidth: "100%",
+            width: "100%",
+            borderRadius: "8px",
+            background: "var(--site-color-surface)",
           },
           icon: {
             fontSize: "24px",
@@ -79,9 +143,10 @@ function FilterBar(): React.JSX.Element {
           },
         }}
         id="filterBar"
-        value={readSearchName(location.search) != null ? value : ""}
+        value={value ?? ""}
         placeholder={placeholder}
         role="search"
+        ariaLabel="Search templates and extensions"
         onClear={(e) => {
           setValue(null);
           const newSearch = new URLSearchParams(location.search);
@@ -93,113 +158,103 @@ function FilterBar(): React.JSX.Element {
             state: prepareUserState(),
           });
         }}
-        onChange={(e) => {
-          if (!e) {
-            return;
-          }
-          setValue(e.currentTarget.value);
+        onSearch={(newValue) => {
+          const submitted = typeof newValue === "string" ? newValue : (value ?? "");
+          setValue(submitted);
           const newSearch = new URLSearchParams(location.search);
           newSearch.delete(SearchNameQueryKey);
-          if (e.currentTarget.value) {
-            newSearch.set(SearchNameQueryKey, e.currentTarget.value);
+          if (submitted) {
+            newSearch.set(SearchNameQueryKey, submitted);
           }
           history.push({
             ...location,
             search: newSearch.toString(),
             state: prepareUserState(),
           });
-          setTimeout(() => {
-            document.getElementById("searchbar")?.focus();
-          }, 0);
+          logSearchToClarity(submitted);
+        }}
+        onChange={(e) => {
+          if (!e) {
+            return;
+          }
+          setValue(e.currentTarget.value);
         }}
       />
     </>
   );
 }
 
+// Compute stats dynamically from template data
+const templateCount = allTemplates.length;
+const uniqueAzureServices = new Set(allTemplates.flatMap((t: any) => t.azureServices || []));
+const uniqueLanguages = new Set(allTemplates.flatMap((t: any) => t.languages || []));
+
 export default function ShowcaseTemplateSearch() {
   const { colorMode } = useColorMode();
   const location = useLocation();
+  const gettingStartedUrl = useBaseUrl("/getting-started");
   const contentType = new URLSearchParams(location.search).get("type") || "templates";
   const title = TITLES[contentType] || TITLES.templates;
   const description = DESCRIPTIONS[contentType] || DESCRIPTIONS.templates;
   return (
     <div className={styles.searchContainer}>
-      <img
-        src={
-          colorMode != "dark"
-            ? useBaseUrl("/img/coverBackground.png")
-            : useBaseUrl("/img/coverBackgroundDark.png")
-        }
-        className={styles.cover}
-        onError={({ currentTarget }) => {
-          currentTarget.style.display = "none";
-        }}
-        alt=""
-      />
       <div className={styles.searchArea}>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
+        <div className={styles.heroContent}>
           <h1 className={styles.heroBar}>
-            <Text
-              size={800}
-              align="center"
-              weight="semibold"
-              style={{
-                background:
-                  "linear-gradient(90deg, rgb(112.68, 94.63, 239.06) 0%, rgb(41.21, 120.83, 190.19) 100%)",
-                WebkitBackgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              {title}
-            </Text>
+            {contentType === "templates" ? (
+              <>
+                From code to cloud<br />
+                <span className={styles.heroAccent}>in minutes.</span>
+              </>
+            ) : (
+              <>{title}</>
+            )}
           </h1>
-          <Text
-            align="center"
-            size={400}
-            style={{
-              color: "#242424",
-              padding: "10px 0 20px 0",
-            }}
-          >
+          <p className={styles.heroDescription}>
             {description}
-          </Text>
+          </p>
           <FilterBar />
-          <Text
-            align="center"
-            size={300}
-            style={{
-              color: "#242424",
-              paddingTop: "20px",
-            }}
-          >
+          {contentType === "templates" && (
+            <div className={styles.statsBar}>
+              <div className={styles.statItem}>
+                <Text weight="bold" size={500} className={styles.statNumber}>{templateCount}+</Text>
+                <Text size={200} className={styles.statLabel}>Templates</Text>
+              </div>
+              <div className={styles.statDivider} />
+              <div className={styles.statItem}>
+                <Text weight="bold" size={500} className={styles.statNumber}>{uniqueAzureServices.size}+</Text>
+                <Text size={200} className={styles.statLabel}>Azure Services</Text>
+              </div>
+              <div className={styles.statDivider} />
+              <div className={styles.statItem}>
+                <Text weight="bold" size={500} className={styles.statNumber}>{uniqueLanguages.size}</Text>
+                <Text size={200} className={styles.statLabel}>Languages</Text>
+              </div>
+            </div>
+          )}
+          <div className={styles.heroActions}>
             {contentType === "extensions"
-              ? "Extensions add new commands, lifecycle hooks, and capabilities to azd. "
-              : "Each template is a fully working, cloud-ready application deployable with the Azure Developer CLI (azd). "}
-          </Text>
-          <Text
-            align="center"
-            size={300}
-            style={{
-              color: "#242424",
-              paddingBottom: "20px",
-            }}
-          >
-            New to azd? Welcome!
-            <FluentUILink
-              href={ADD_URL}
-              target="_blank"
-              style={{ paddingLeft: "3px" }}
-              className={styles.learnMoreColor}
-            >
-              Learn more in our docs.
-            </FluentUILink>
-          </Text>
+              ? <>
+                  <Text size={300} className={styles.heroSubtext}>
+                    Extensions add new commands, lifecycle hooks, and capabilities to azd.{" "}
+                    <FluentUILink
+                      href={ADD_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ paddingLeft: "3px" }}
+                    >
+                      Learn more in our docs.
+                    </FluentUILink>
+                  </Text>
+                </>
+              : <a
+                    href={gettingStartedUrl}
+                    className={styles.heroPrimaryButton}
+                  >
+                    Get Started in Minutes →
+                  </a>
+            }
+          </div>
         </div>
       </div>
     </div>

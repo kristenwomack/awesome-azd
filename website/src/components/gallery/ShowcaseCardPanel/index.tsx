@@ -119,8 +119,8 @@ export default function ShowcaseCardPanel({ user }: { user: User }) {
         selectors: {
           ":before":
             colorMode != "dark"
-              ? { backgroundColor: "#6656d1" }
-              : { backgroundColor: "#A79CF1" },
+              ? { backgroundColor: "#0369A1" }
+              : { backgroundColor: "#38BDF8" },
           ":hover":
             colorMode != "dark"
               ? { backgroundColor: "#f3f2f1" }
@@ -180,6 +180,7 @@ export default function ShowcaseCardPanel({ user }: { user: User }) {
         <FluentUILink
           href={user.source}
           target="_blank"
+          rel="noopener noreferrer"
           style={{
             display: "flex",
             alignItems: "center",
@@ -265,12 +266,14 @@ export default function ShowcaseCardPanel({ user }: { user: User }) {
                     padding: "0px",
                     height: "20px",
                   }}
+                  onClick={toggleIsPopupVisibleTemplateDetails}
+                  aria-label="Toggle template details"
                 >
                   <img
-                    onClick={toggleIsPopupVisibleTemplateDetails}
                     src={chevronSVG}
+                    width={20}
                     height={20}
-                    alt="Expand"
+                    alt=""
                   />
                 </DefaultButton>
               </div>
@@ -352,6 +355,7 @@ export default function ShowcaseCardPanel({ user }: { user: User }) {
                         "https://marketplace.visualstudio.com/items?itemName=ms-azuretools.azure-dev"
                       }
                       target="_blank"
+                      rel="noopener noreferrer"
                       className={styles.color}
                     >
                       azd VS Code extension
@@ -429,12 +433,14 @@ export default function ShowcaseCardPanel({ user }: { user: User }) {
                     padding: "0px",
                     height: "20px",
                   }}
+                  onClick={toggleIsPopupVisibleAzureCalculator}
+                  aria-label="Toggle included services"
                 >
                   <img
-                    onClick={toggleIsPopupVisibleAzureCalculator}
                     src={chevronSVG}
+                    width={20}
                     height={20}
-                    alt="Expand"
+                    alt=""
                   />
                 </DefaultButton>
               </div>
@@ -454,6 +460,7 @@ export default function ShowcaseCardPanel({ user }: { user: User }) {
                     <a
                       href="https://azure.microsoft.com/en-us/pricing/calculator/"
                       target="_blank"
+                      rel="noopener noreferrer"
                       className={styles.color}
                     >
                       Azure Pricing Calculator
@@ -575,6 +582,7 @@ function ShowcaseCardAzureTag({
                 : useBaseUrl(tagObject.darkModeAzureIcon)
             }
             alt="Azure Service Icon"
+            width={20}
             height={20}
           />
         </div>
@@ -615,6 +623,7 @@ function ShowcaseCardAzureTag({
             <a
               href={tagObject.url}
               target="_blank"
+              rel="noopener noreferrer"
               style={{
                 fontSize: "12px",
                 fontWeight: "400",

@@ -33,19 +33,19 @@ export default function ShowcaseEmptyResult({ id }: { id: string }) {
         {InputValue != null ? (
           <>
             <Text size={500} weight="bold" align="center">
-              We couldn’t find any results for '{InputValue}'
+              No templates found for '{InputValue}'
             </Text>
             <Text size={400} align="center">
-              Check for spelling or try searching for another term.
+              Try a different search term or browse all templates.
             </Text>
           </>
         ) : (
           <>
             <Text size={500} weight="bold" align="center">
-              We couldn’t find any results.
+              No templates match your filters.
             </Text>
             <Text size={400} align="center">
-              Check for tags or try filtering for another tag.
+              Try broadening your search or clear filters to browse all templates.
             </Text>
           </>
         )}
@@ -59,6 +59,7 @@ export default function ShowcaseEmptyResult({ id }: { id: string }) {
         >
           <img
             height={50}
+            width={50}
             src={useBaseUrl("/img/smile.svg")}
             alt="smile"
             style={{ flex: 1 }}
@@ -81,6 +82,7 @@ export default function ShowcaseEmptyResult({ id }: { id: string }) {
               key="emptySearch_contributeTemplate"
               href="https://azure.github.io/awesome-azd/docs/contribute"
               target="_blank"
+              rel="noopener noreferrer"
               className={styles.colorLink}
             >
               • Learn how to contribute an azd template
@@ -89,6 +91,7 @@ export default function ShowcaseEmptyResult({ id }: { id: string }) {
               key="emptySearch_requestBoard"
               href="https://github.com/Azure/awesome-azd/issues/new?assignees=kristenwomack%2C+savannahostrowski&labels=requested-contribution&template=%F0%9F%A4%94-submit-a-template-request.md&title=%5BIdea%5D+%3Cyour-template-name%3E"
               target="_blank"
+              rel="noopener noreferrer"
               className={styles.colorLink}
             >
               • View our template request board

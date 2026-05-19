@@ -5,7 +5,6 @@
 
 import React from "react";
 import ShowcaseTagSelect from "../ShowcaseTagSelect";
-import ShowcaseAuthorSelect from "../ShowcaseAuthorSelect";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import {
   Accordion,
@@ -21,144 +20,6 @@ import styles from "./styles.module.css";
 import { useColorMode } from "@docusaurus/theme-common";
 import { useHistory } from "@docusaurus/router";
 import { prepareUserState } from "@site/src/pages/index";
-import { UserState } from "../ShowcaseTemplateSearch";
-import { splitAuthors } from "@site/src/utils/jsUtils";
-
-function ShowcaseAuthorFilterViewAll({
-  authors,
-  number,
-  activeAuthors,
-  selectedAuthorCheckbox,
-  setSelectedAuthorCheckbox,
-  location,
-  readSearchAuthors,
-  replaceSearchAuthors,
-}: {
-  authors: string[];
-  number: string;
-  activeAuthors: string[];
-  selectedAuthorCheckbox: string[];
-  setSelectedAuthorCheckbox: React.Dispatch<React.SetStateAction<string[]>>;
-  location;
-  readSearchAuthors: (search: string) => string[];
-  replaceSearchAuthors: (search: string, newAuthors: string[]) => string;
-}) {
-  const [openItems, setOpenItems] = React.useState(["0"]);
-  const handleToggle: AccordionToggleEventHandler<string> = (event, data) => {
-    setOpenItems(data.openItems);
-  };
-  const { colorMode } = useColorMode();
-  const chevronDownSmall =
-    colorMode != "dark" ? (
-      <img src={useBaseUrl("/img/smallChevron.svg")} />
-    ) : (
-      <img src={useBaseUrl("/img/smallChevronDark.svg")} />
-    );
-  const chevronUpSmall =
-    colorMode != "dark" ? (
-      <img
-        style={{ transform: "rotate(180deg)" }}
-        src={useBaseUrl("/img/smallChevron.svg")}
-      />
-    ) : (
-      <img
-        style={{ transform: "rotate(180deg)" }}
-        src={useBaseUrl("/img/smallChevronDark.svg")}
-      />
-    );
-  let value = number + "2";
-  return (
-    <>
-      {authors.slice(0, 6).map((author, index) => {
-        const key = `showcase_checkbox_author_key_${author}`;
-        const id = `showcase_checkbox_author_id_${author}`;
-
-        return index == authors.length - 1 ? (
-          <div
-            key={key}
-            className={styles.checkboxListItem}
-            style={{ marginBottom: "7px" }}
-          >
-            <ShowcaseAuthorSelect
-              id={id}
-              author={author}
-              label={author}
-              activeAuthors={activeAuthors}
-              selectedAuthors={selectedAuthorCheckbox}
-              setSelectedAuthors={setSelectedAuthorCheckbox}
-              location={location}
-              readSearchAuthors={readSearchAuthors}
-              replaceSearchAuthors={replaceSearchAuthors}
-            />
-          </div>
-        ) : (
-          <div key={key} className={styles.checkboxListItem}>
-            <ShowcaseAuthorSelect
-              id={id}
-              author={author}
-              label={author}
-              activeAuthors={activeAuthors}
-              selectedAuthors={selectedAuthorCheckbox}
-              setSelectedAuthors={setSelectedAuthorCheckbox}
-              location={location}
-              readSearchAuthors={readSearchAuthors}
-              replaceSearchAuthors={replaceSearchAuthors}
-            />
-          </div>
-        );
-      })}
-      {authors.length > 5 ? (
-        <Accordion
-          openItems={openItems}
-          onToggle={handleToggle}
-          multiple
-          collapsible
-        >
-          <AccordionItem value={value} style={{ padding: "0px" }}>
-            <AccordionPanel style={{ margin: "0px" }}>
-              {authors.slice(6, authors.length).map((author) => {
-                const key = `showcase_checkbox_author_key_${author}`;
-                const id = `showcase_checkbox_author_id_${author}`;
-
-                return (
-                  <div key={key} className={styles.checkboxListItem}>
-                    <ShowcaseAuthorSelect
-                      id={id}
-                      author={author}
-                      label={author}
-                      activeAuthors={activeAuthors}
-                      selectedAuthors={selectedAuthorCheckbox}
-                      setSelectedAuthors={setSelectedAuthorCheckbox}
-                      location={location}
-                      readSearchAuthors={readSearchAuthors}
-                      replaceSearchAuthors={replaceSearchAuthors}
-                    />
-                  </div>
-                );
-              })}
-            </AccordionPanel>
-            <AccordionHeader
-              inline={true}
-              expandIconPosition="end"
-              expandIcon={
-                openItems.includes(value) ? chevronUpSmall : chevronDownSmall
-              }
-            >
-              <div
-                style={{
-                  fontSize: "12px",
-                }}
-                className={styles.color}
-              >
-                View All
-              </div>
-            </AccordionHeader>
-          </AccordionItem>
-        </Accordion>
-      ) : null}
-    </>
-  );
-}
 
 function ShowcaseFilterViewAll({
   tags,
@@ -169,6 +30,7 @@ function ShowcaseFilterViewAll({
   location,
   readSearchTags,
   replaceSearchTags,
+  tagCounts,
 }: {
   tags: TagType[];
   number: string;
@@ -178,6 +40,7 @@ function ShowcaseFilterViewAll({
   location;
   readSearchTags: (search: string) => TagType[];
   replaceSearchTags: (search: string, newTags: TagType[]) => string;
+  tagCounts?: Record<string, number>;
 }) {
   const [openItems, setOpenItems] = React.useState(["0"]);
   const handleToggle: AccordionToggleEventHandler<string> = (event, data) => {
@@ -186,20 +49,22 @@ function ShowcaseFilterViewAll({
   const { colorMode } = useColorMode();
   const chevronDownSmall =
     colorMode != "dark" ? (
-      <img src={useBaseUrl("/img/smallChevron.svg")} />
+      <img src={useBaseUrl("/img/smallChevron.svg")} width={16} height={16} alt="" />
     ) : (
-      <img src={useBaseUrl("/img/smallChevronDark.svg")} />
+      <img src={useBaseUrl("/img/smallChevronDark.svg")} width={16} height={16} alt="" />
     );
   const chevronUpSmall =
     colorMode != "dark" ? (
       <img
         style={{ transform: "rotate(180deg)" }}
         src={useBaseUrl("/img/smallChevron.svg")}
+        width={16} height={16} alt=""
       />
     ) : (
       <img
         style={{ transform: "rotate(180deg)" }}
         src={useBaseUrl("/img/smallChevronDark.svg")}
+        width={16} height={16} alt=""
       />
     );
   let value = number + "2";
@@ -226,6 +91,7 @@ function ShowcaseFilterViewAll({
               location={location}
               readSearchTags={readSearchTags}
               replaceSearchTags={replaceSearchTags}
+              count={tagCounts?.[tag]}
             />
           </div>
         ) : (
@@ -240,11 +106,12 @@ function ShowcaseFilterViewAll({
               location={location}
               readSearchTags={readSearchTags}
               replaceSearchTags={replaceSearchTags}
+              count={tagCounts?.[tag]}
             />
           </div>
         );
       })}
-      {tags.length > 5 ? (
+      {tags.length > 6 ? (
         <Accordion
           openItems={openItems}
           onToggle={handleToggle}
@@ -270,6 +137,7 @@ function ShowcaseFilterViewAll({
                       location={location}
                       readSearchTags={readSearchTags}
                       replaceSearchTags={replaceSearchTags}
+                      count={tagCounts?.[tag]}
                     />
                   </div>
                 );
@@ -335,56 +203,74 @@ export default function ShowcaseLeftFilters({
   const searchParams = new URLSearchParams(location.search);
   const isExtensions = searchParams.get("type") === "extensions";
   
+  // Compute template counts per tag for display
+  const tagCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {};
+    const items = isExtensions ? unsortedExtensions : unsortedUsers;
+    items.forEach((item) => {
+      let allTags: TagType[];
+      if (isExtensions) {
+        const ext = item as any;
+        allTags = [...ext.tags, ...ext.capabilities.map((c: string) => ("ext-" + c) as TagType)];
+      } else {
+        const user = item as any;
+        allTags = [
+          ...(user.tags || []),
+          ...(user.languages || []),
+          ...(user.frameworks || []),
+          ...(user.azureServices || []),
+          ...(user.IaC || []),
+        ];
+      }
+      allTags.forEach((tag) => {
+        counts[tag] = (counts[tag] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [isExtensions]);
+
   // Extract unique authors based on content type
-  const allAuthors = new Set<string>();
-  if (isExtensions) {
-    unsortedExtensions.forEach(ext => {
-      const authors = splitAuthors(ext.author);
-      authors.forEach(author => allAuthors.add(author));
-    });
-  } else {
-    unsortedUsers.forEach(user => {
-      const authors = splitAuthors(user.author);
-      authors.forEach(author => allAuthors.add(author));
-    });
-  }
-  const sortedAuthors = Array.from(allAuthors).sort();
+  const MIN_TEMPLATE_COUNT = 3;
+  const applyMinCountThreshold = React.useCallback(
+    (tags: TagType[]): TagType[] =>
+      tags.filter(
+        (tag) => (tagCounts?.[tag] ?? 0) >= MIN_TEMPLATE_COUNT || selectedTags.includes(tag),
+      ),
+    [tagCounts, selectedTags],
+  );
+
+  // Uncategorized tags (msft, community, new, popular, aicollection) are
+  // curated/featured collections and are intentionally not run through
+  // applyMinCountThreshold — they should always remain discoverable
+  // regardless of how many templates currently carry them.
   const uncategoryTag = TagList.filter((tag) => {
     const tagObject = Tags[tag];
     return tagObject.type === undefined;
   });
-  const languageTag = sortTagList.filter((tag) => {
-    const tagObject = Tags[tag];
-    return tagObject.type === "Language";
-  });
-  const frameworkTag = sortTagList.filter((tag) => {
-    const tagObject = Tags[tag];
-    return tagObject.type === "Framework";
-  });
-  const servicesTag = sortTagList.filter((tag) => {
-    const tagObject = Tags[tag];
-    return tagObject.type === "Service";
-  });
-  const databaseTag = sortTagList.filter((tag) => {
-    const tagObject = Tags[tag];
-    return tagObject.type === "Database";
-  });
-  const infrastructureAsCodeTag = sortTagList.filter((tag) => {
-    const tagObject = Tags[tag];
-    return tagObject.type === "Infrastructure as Code";
-  });
-  const otherTag = sortTagList.filter((tag) => {
-    const tagObject = Tags[tag];
-    return tagObject.type === "Tools";
-  });
-  const topicTag = sortTagList.filter((tag) => {
-    const tagObject = Tags[tag];
-    return tagObject.type === "Topic";
-  });
-  const extensionCapabilityTag = sortTagList.filter((tag) => {
-    const tagObject = Tags[tag];
-    return tagObject.type === "Extension Capability";
-  });
+  const languageTag = applyMinCountThreshold(
+    sortTagList.filter((tag) => Tags[tag].type === "Language"),
+  );
+  const frameworkTag = applyMinCountThreshold(
+    sortTagList.filter((tag) => Tags[tag].type === "Framework"),
+  );
+  const servicesTag = applyMinCountThreshold(
+    sortTagList.filter((tag) => Tags[tag].type === "Service"),
+  );
+  const databaseTag = applyMinCountThreshold(
+    sortTagList.filter((tag) => Tags[tag].type === "Database"),
+  );
+  const infrastructureAsCodeTag = applyMinCountThreshold(
+    sortTagList.filter((tag) => Tags[tag].type === "Infrastructure as Code"),
+  );
+  const otherTag = applyMinCountThreshold(
+    sortTagList.filter((tag) => Tags[tag].type === "Tools"),
+  );
+  const topicTag = applyMinCountThreshold(
+    sortTagList.filter((tag) => Tags[tag].type === "Topic"),
+  );
+  const extensionCapabilityTag = sortTagList.filter(
+    (tag) => Tags[tag].type === "Extension Capability",
+  );
   const [openItems, setOpenItems] = React.useState([]);
   const handleToggle: AccordionToggleEventHandler<string> = (event, data) => {
     setOpenItems(data.openItems);
@@ -414,7 +300,7 @@ export default function ShowcaseLeftFilters({
         <div className={styles.filterTop}>
           <div className={styles.filterBy}>Filter by</div>
           {selectedTags.length > 0 || selectedAuthors.length > 0 ? (
-            <div className={styles.clearAll} onClick={clearAll}>
+            <div className={styles.clearAll} onClick={clearAll} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); clearAll(); } }}>
               Clear all
             </div>
           ) : null}
@@ -440,6 +326,7 @@ export default function ShowcaseLeftFilters({
                 location={location}
                 readSearchTags={readSearchTags}
                 replaceSearchTags={replaceSearchTags}
+                count={tagCounts?.[tag]}
               />
             </div>
           );
@@ -447,178 +334,198 @@ export default function ShowcaseLeftFilters({
       </div>
       {!isExtensions && (
         <>
-          <AccordionItem value="1">
-            <AccordionHeader
-              expandIconPosition="end"
-              style={{
-                background:
-                  "linear-gradient(#D1D1D1 0 0) top /89.8% 0.6px no-repeat",
-              }}
-            >
-              <div style={{ fontSize: "16px", fontWeight: "500" }}>Language</div>
-            </AccordionHeader>
-            <AccordionPanel>
-              <ShowcaseFilterViewAll
-                tags={languageTag}
-                number={"1"}
-                activeTags={activeTags}
-                selectedCheckbox={selectedCheckbox}
-                setSelectedCheckbox={setSelectedCheckbox}
-                location={location}
-                readSearchTags={readSearchTags}
-                replaceSearchTags={replaceSearchTags}
-              />
-            </AccordionPanel>
-          </AccordionItem>
+          {languageTag.length > 0 && (
+            <AccordionItem value="1">
+              <AccordionHeader
+                className={styles.categoryHeader}
+                expandIconPosition="end"
+              >
+                <div style={{ fontSize: "16px", fontWeight: "500" }}>
+                  Language
+                  <span className={styles.filterCount}>{languageTag.length}</span>
+                </div>
+              </AccordionHeader>
+              <AccordionPanel>
+                <ShowcaseFilterViewAll
+                  tags={languageTag}
+                  number={"1"}
+                  activeTags={activeTags}
+                  selectedCheckbox={selectedCheckbox}
+                  setSelectedCheckbox={setSelectedCheckbox}
+                  location={location}
+                  readSearchTags={readSearchTags}
+                  replaceSearchTags={replaceSearchTags}
+                  tagCounts={tagCounts}
+                />
+              </AccordionPanel>
+            </AccordionItem>
+          )}
 
-          <AccordionItem value="2">
-            <AccordionHeader
-              expandIconPosition="end"
-              style={{
-                background:
-                  "linear-gradient(#D1D1D1 0 0) top /89.8% 0.6px no-repeat",
-              }}
-            >
-              <div style={{ fontSize: "16px", fontWeight: "500" }}>Framework</div>
-            </AccordionHeader>
-            <AccordionPanel>
-              <ShowcaseFilterViewAll
-                tags={frameworkTag}
-                number={"2"}
-                activeTags={activeTags}
-                selectedCheckbox={selectedCheckbox}
-                setSelectedCheckbox={setSelectedCheckbox}
-                location={location}
-                readSearchTags={readSearchTags}
-                replaceSearchTags={replaceSearchTags}
-              />
-            </AccordionPanel>
-          </AccordionItem>
+          {frameworkTag.length > 0 && (
+            <AccordionItem value="2">
+              <AccordionHeader
+                className={styles.categoryHeader}
+                expandIconPosition="end"
+              >
+                <div style={{ fontSize: "16px", fontWeight: "500" }}>
+                  Framework
+                  <span className={styles.filterCount}>{frameworkTag.length}</span>
+                </div>
+              </AccordionHeader>
+              <AccordionPanel>
+                <ShowcaseFilterViewAll
+                  tags={frameworkTag}
+                  number={"2"}
+                  activeTags={activeTags}
+                  selectedCheckbox={selectedCheckbox}
+                  setSelectedCheckbox={setSelectedCheckbox}
+                  location={location}
+                  readSearchTags={readSearchTags}
+                  replaceSearchTags={replaceSearchTags}
+                  tagCounts={tagCounts}
+                />
+              </AccordionPanel>
+            </AccordionItem>
+          )}
 
-          <AccordionItem value="3">
-            <AccordionHeader
-              expandIconPosition="end"
-              style={{
-                background:
-                  "linear-gradient(#D1D1D1 0 0) top /89.8% 0.6px no-repeat",
-              }}
-            >
-              <div style={{ fontSize: "16px", fontWeight: "500" }}>Services</div>
-            </AccordionHeader>
-            <AccordionPanel>
-              <ShowcaseFilterViewAll
-                tags={servicesTag}
-                number={"3"}
-                activeTags={activeTags}
-                selectedCheckbox={selectedCheckbox}
-                setSelectedCheckbox={setSelectedCheckbox}
-                location={location}
-                readSearchTags={readSearchTags}
-                replaceSearchTags={replaceSearchTags}
-              />
-            </AccordionPanel>
-          </AccordionItem>
+          {servicesTag.length > 0 && (
+            <AccordionItem value="3">
+              <AccordionHeader
+                className={styles.categoryHeader}
+                expandIconPosition="end"
+              >
+                <div style={{ fontSize: "16px", fontWeight: "500" }}>
+                  Services
+                  <span className={styles.filterCount}>{servicesTag.length}</span>
+                </div>
+              </AccordionHeader>
+              <AccordionPanel>
+                <ShowcaseFilterViewAll
+                  tags={servicesTag}
+                  number={"3"}
+                  activeTags={activeTags}
+                  selectedCheckbox={selectedCheckbox}
+                  setSelectedCheckbox={setSelectedCheckbox}
+                  location={location}
+                  readSearchTags={readSearchTags}
+                  replaceSearchTags={replaceSearchTags}
+                  tagCounts={tagCounts}
+                />
+              </AccordionPanel>
+            </AccordionItem>
+          )}
 
-          <AccordionItem value="4">
-            <AccordionHeader
-              expandIconPosition="end"
-              style={{
-                background:
-                  "linear-gradient(#D1D1D1 0 0) top /89.8% 0.6px no-repeat",
-              }}
-            >
-              <div style={{ fontSize: "16px", fontWeight: "500" }}>Database</div>
-            </AccordionHeader>
-            <AccordionPanel>
-              <ShowcaseFilterViewAll
-                tags={databaseTag}
-                number={"4"}
-                activeTags={activeTags}
-                selectedCheckbox={selectedCheckbox}
-                setSelectedCheckbox={setSelectedCheckbox}
-                location={location}
-                readSearchTags={readSearchTags}
-                replaceSearchTags={replaceSearchTags}
-              />
-            </AccordionPanel>
-          </AccordionItem>
+          {databaseTag.length > 0 && (
+            <AccordionItem value="4">
+              <AccordionHeader
+                className={styles.categoryHeader}
+                expandIconPosition="end"
+              >
+                <div style={{ fontSize: "16px", fontWeight: "500" }}>
+                  Database
+                  <span className={styles.filterCount}>{databaseTag.length}</span>
+                </div>
+              </AccordionHeader>
+              <AccordionPanel>
+                <ShowcaseFilterViewAll
+                  tags={databaseTag}
+                  number={"4"}
+                  activeTags={activeTags}
+                  selectedCheckbox={selectedCheckbox}
+                  setSelectedCheckbox={setSelectedCheckbox}
+                  location={location}
+                  readSearchTags={readSearchTags}
+                  replaceSearchTags={replaceSearchTags}
+                  tagCounts={tagCounts}
+                />
+              </AccordionPanel>
+            </AccordionItem>
+          )}
 
-          <AccordionItem value="5">
-            <AccordionHeader
-              expandIconPosition="end"
-              style={{
-                background:
-                  "linear-gradient(#D1D1D1 0 0) top /89.8% 0.6px no-repeat",
-              }}
-            >
-              <div style={{ fontSize: "16px", fontWeight: "500" }}>
-                Infrastructure as Code
-              </div>
-            </AccordionHeader>
-            <AccordionPanel>
-              <ShowcaseFilterViewAll
-                tags={infrastructureAsCodeTag}
-                number={"5"}
-                activeTags={activeTags}
-                selectedCheckbox={selectedCheckbox}
-                setSelectedCheckbox={setSelectedCheckbox}
-                location={location}
-                readSearchTags={readSearchTags}
-                replaceSearchTags={replaceSearchTags}
-              />
-            </AccordionPanel>
-          </AccordionItem>
+          {otherTag.length > 0 && (
+            <AccordionItem value="5">
+              <AccordionHeader
+                className={styles.categoryHeader}
+                expandIconPosition="end"
+              >
+                <div style={{ fontSize: "16px", fontWeight: "500" }}>
+                  Tools
+                  <span className={styles.filterCount}>{otherTag.length}</span>
+                </div>
+              </AccordionHeader>
+              <AccordionPanel>
+                <ShowcaseFilterViewAll
+                  tags={otherTag}
+                  number={"5"}
+                  activeTags={activeTags}
+                  selectedCheckbox={selectedCheckbox}
+                  setSelectedCheckbox={setSelectedCheckbox}
+                  location={location}
+                  readSearchTags={readSearchTags}
+                  replaceSearchTags={replaceSearchTags}
+                  tagCounts={tagCounts}
+                />
+              </AccordionPanel>
+            </AccordionItem>
+          )}
 
-          <AccordionItem value="6">
-            <AccordionHeader
-              expandIconPosition="end"
-              style={{
-                background:
-                  "linear-gradient(#D1D1D1 0 0) top /89.8% 0.6px no-repeat",
-              }}
-            >
-              <div style={{ fontSize: "16px", fontWeight: "500" }}>Tools</div>
-            </AccordionHeader>
-            <AccordionPanel>
-              <ShowcaseFilterViewAll
-                tags={otherTag}
-                number={"6"}
-                activeTags={activeTags}
-                selectedCheckbox={selectedCheckbox}
-                setSelectedCheckbox={setSelectedCheckbox}
-                location={location}
-                readSearchTags={readSearchTags}
-                replaceSearchTags={replaceSearchTags}
-              />
-            </AccordionPanel>
-          </AccordionItem>
+          {infrastructureAsCodeTag.length > 0 && (
+            <AccordionItem value="6">
+              <AccordionHeader
+                className={styles.categoryHeader}
+                expandIconPosition="end"
+              >
+                <div style={{ fontSize: "16px", fontWeight: "500" }}>
+                  Infrastructure as Code
+                  <span className={styles.filterCount}>{infrastructureAsCodeTag.length}</span>
+                </div>
+              </AccordionHeader>
+              <AccordionPanel>
+                <ShowcaseFilterViewAll
+                  tags={infrastructureAsCodeTag}
+                  number={"6"}
+                  activeTags={activeTags}
+                  selectedCheckbox={selectedCheckbox}
+                  setSelectedCheckbox={setSelectedCheckbox}
+                  location={location}
+                  readSearchTags={readSearchTags}
+                  replaceSearchTags={replaceSearchTags}
+                  tagCounts={tagCounts}
+                />
+              </AccordionPanel>
+            </AccordionItem>
+          )}
 
-          <AccordionItem value="7">
-            <AccordionHeader
-              expandIconPosition="end"
-              style={{
-                background:
-                  "linear-gradient(#D1D1D1 0 0) top /89.8% 0.6px no-repeat",
-              }}
-            >
-              <div style={{ fontSize: "16px", fontWeight: "500" }}>Topic</div>
-            </AccordionHeader>
-            <AccordionPanel>
-              <ShowcaseFilterViewAll
-                tags={topicTag}
-                number={"7"}
-                activeTags={activeTags}
-                selectedCheckbox={selectedCheckbox}
-                setSelectedCheckbox={setSelectedCheckbox}
-                location={location}
-                readSearchTags={readSearchTags}
-                replaceSearchTags={replaceSearchTags}
-              />
-            </AccordionPanel>
-          </AccordionItem>
+          {topicTag.length > 0 && (
+            <AccordionItem value="7">
+              <AccordionHeader
+                className={styles.categoryHeader}
+                expandIconPosition="end"
+              >
+                <div style={{ fontSize: "16px", fontWeight: "500" }}>
+                  Topic
+                  <span className={styles.filterCount}>{topicTag.length}</span>
+                </div>
+              </AccordionHeader>
+              <AccordionPanel>
+                <ShowcaseFilterViewAll
+                  tags={topicTag}
+                  number={"7"}
+                  activeTags={activeTags}
+                  selectedCheckbox={selectedCheckbox}
+                  setSelectedCheckbox={setSelectedCheckbox}
+                  location={location}
+                  readSearchTags={readSearchTags}
+                  replaceSearchTags={replaceSearchTags}
+                  tagCounts={tagCounts}
+                />
+              </AccordionPanel>
+            </AccordionItem>
+          )}
         </>
       )}
 
+      {/* Extension Capabilities filter hidden pending release
       {isExtensions && extensionCapabilityTag.length > 0 && (
         <AccordionItem value="9">
           <AccordionHeader
@@ -642,34 +549,12 @@ export default function ShowcaseLeftFilters({
               location={location}
               readSearchTags={readSearchTags}
               replaceSearchTags={replaceSearchTags}
+              tagCounts={tagCounts}
             />
           </AccordionPanel>
         </AccordionItem>
       )}
-
-      <AccordionItem value="8">
-        <AccordionHeader
-          expandIconPosition="end"
-          style={{
-            background:
-              "linear-gradient(#D1D1D1 0 0) top /89.8% 0.6px no-repeat",
-          }}
-        >
-          <div style={{ fontSize: "16px", fontWeight: "500" }}>Authors</div>
-        </AccordionHeader>
-        <AccordionPanel>
-          <ShowcaseAuthorFilterViewAll
-            authors={sortedAuthors}
-            number={"8"}
-            activeAuthors={activeAuthors}
-            selectedAuthorCheckbox={selectedAuthorCheckbox}
-            setSelectedAuthorCheckbox={setSelectedAuthorCheckbox}
-            location={location}
-            readSearchAuthors={readSearchAuthors}
-            replaceSearchAuthors={replaceSearchAuthors}
-          />
-        </AccordionPanel>
-      </AccordionItem>
+      */}
     </Accordion>
   );
 }

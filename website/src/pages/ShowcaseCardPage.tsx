@@ -36,7 +36,10 @@ import { Dismiss20Filled } from "@fluentui/react-icons";
 const TagQueryStringKey2 = "tags";
 
 const readSearchTags2 = (search: string): TagType[] => {
-  return new URLSearchParams(search).getAll(TagQueryStringKey2) as TagType[];
+  // SECURITY: Filter out query param tag values that don't exist in the Tags
+  // object to prevent prototype pollution or undefined property access.
+  const rawTags = new URLSearchParams(search).getAll(TagQueryStringKey2);
+  return rawTags.filter((tag): tag is TagType => Object.hasOwn(Tags, tag));
 }
 
 function replaceSearchTags(search: string, newTags: TagType[]) {
@@ -543,7 +546,7 @@ export default function ShowcaseCardPage({
 
   return (
     <>
-      {/* Content Type Toggle */}
+      {/* Content Type Toggle - Extension gallery hidden pending release
       <div
         role="group"
         aria-label="Content type"
@@ -571,6 +574,14 @@ export default function ShowcaseCardPage({
           aria-label="Switch to extensions view"
         >
           Extensions
+          <Badge
+            size="small"
+            appearance="tint"
+            color="informative"
+            style={{ marginLeft: 6, fontSize: "10px", verticalAlign: "middle" }}
+          >
+            Preview
+          </Badge>
         </ToggleButton>
         {isExtensions && (
           <Text size={300} style={{ marginLeft: "auto" }}>
@@ -579,15 +590,17 @@ export default function ShowcaseCardPage({
               href="https://github.com/Azure/awesome-azd/issues/new?template=extension-submission.yml"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: "var(--ifm-color-purple-light)", textDecoration: "none" }}
+              style={{ color: "var(--ifm-color-primary)", textDecoration: "none" }}
             >
               Submit it here →
             </a>
           </Text>
         )}
       </div>
+      */}
 
       <div
+        className={styles.viewingSortRow}
         style={{
           display: "flex",
           alignItems: "center",
@@ -671,11 +684,14 @@ export default function ShowcaseCardPage({
         <Spinner labelPosition="below" label="Loading..." />
       ) : (
         <>
+          {/* Extension gallery hidden pending release
           {isExtensions ? (
             <ShowcaseExtensionCards filteredExtensions={paginatedExtensions} />
           ) : (
             <ShowcaseCards filteredUsers={paginatedTemplates} />
           )}
+          */}
+          <ShowcaseCards filteredUsers={paginatedTemplates} />
           {totalPages > 1 && (
             <PaginationControls
               currentPage={currentPage}

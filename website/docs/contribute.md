@@ -36,10 +36,20 @@ If you would like to contribute a template but are not sure where to start, [mak
 2.  Add Bicep files
 3.  Update azure.yaml 
 
+### Automated Template Submission
+
+For a faster submission experience, use the automated pipeline:
+
+1. **[Submit a template issue](https://github.com/Azure/awesome-azd/issues/new?template=template-submission.yml)** — Fill out the form with your template details
+2. **Automatic validation** — A workflow validates your repository and creates a PR automatically
+3. **Review & merge** — A maintainer reviews and approves the PR
+
 ### [Submit a Resource](https://github.com/Azure/awesome-azd/compare)
 Did you write or find an article that helped you get started with `azd`? Or maybe you created or found a video that showed you how to create an azd template? Whatever the resource might be, we would love for you to share it with our community! Submit content you think should be included in `awesome-azd/README.md`
 
-## Submit an azd Extension
+{/* ## Submit an azd Extension (Preview)
+
+> **Preview**: azd extensions are currently in preview. The extension gallery and submission process may change before general availability.
 
 Have you built an azd extension? Share it with the community! Extensions expand `azd` with custom commands, lifecycle events, MCP servers, and more.
 
@@ -63,7 +73,7 @@ Have you built an azd extension? Share it with the community! Extensions expand 
 - A well-documented README in your source repository
 - Valid capabilities declared (e.g., `custom-commands`, `lifecycle-events`, `mcp-server`)
 
-Learn more about azd extensions in the [Extensions documentation](./extensions.md).
+Learn more about azd extensions in the [Extensions documentation](./extensions.md). */}
 
 ## Other Ways To Help
 Other than these, we always welcome feedback through a:
@@ -73,4 +83,4 @@ Other than these, we always welcome feedback through a:
  - [**feature request**](https://github.com/Azure/awesome-azd/issues/new?assignees=&labels=&template=feature_request.md&title=): for improvements to our awesome-azd site
 
 ## Next Steps
-- Visit our [FAQ](./1-faq/1-what-is-azd.md)
+- Visit our [FAQ](./faq.md)

@@ -30,7 +30,14 @@ const config = {
 
   // CONFIG: Early detection for site health
   onBrokenLinks: "throw",
-  onBrokenMarkdownLinks: "warn",
+
+  // CONFIG: Markdown hooks
+  //    See: https://docusaurus.io/docs/api/docusaurus-config#markdown
+  markdown: {
+    hooks: {
+      onBrokenMarkdownLinks: "warn",
+    },
+  },
 
   // CONFIG: Localization if supporting multiple languages
   i18n: {
@@ -38,10 +45,31 @@ const config = {
     locales: ["en"],
   },
 
+  // CONFIG: Google Fonts for Warm Precision design
+  // NOTE: SRI cannot be used for Google Fonts because responses vary by user-agent
+  // (different font formats for different browsers). Self-hosting fonts is an
+  // alternative but requires ongoing maintenance for updates.
+  stylesheets: [
+    {
+      href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
+      type: "text/css",
+    },
+  ],
+
   // CONFIG: scripts
+  // NOTE: We deliberately do NOT pin SRI integrity hashes on these scripts.
+  // Both URLs are *versionless* (no semver in the path) and Microsoft updates
+  // them in place. A pinned hash on a moving target silently breaks the script
+  // load whenever the CDN is updated
   scripts: [
-    "https://js.monitor.azure.com/scripts/c/ms.analytics-web-4.min.js",
-    "https://wcpstatic.microsoft.com/mscc/lib/v2/wcp-consent.js",
+    {
+      src: "https://js.monitor.azure.com/scripts/c/ms.analytics-web-4.min.js",
+      crossOrigin: "anonymous",
+    },
+    {
+      src: "https://wcpstatic.microsoft.com/mscc/lib/v2/wcp-consent.js",
+      crossOrigin: "anonymous",
+    },
   ],
 
   // CONFIG: theme = set properties for UI like navbar, footer, docs, copyright etc.
@@ -100,6 +128,21 @@ const config = {
             label: "Resources",
             position: "left",
           },
+          {
+            type: "dropdown",
+            label: "Services",
+            position: "left",
+            items: [
+              {
+                to: "/services/container-apps",
+                label: "Azure Container Apps",
+              },
+              {
+                to: "/services/azure-functions",
+                label: "Azure Functions",
+              },
+            ],
+          },
 
           // right
           {
@@ -113,7 +156,7 @@ const config = {
           // Make sure you have class defined in src/css/custom.css
           {
             to: "https://azure.github.io/awesome-azd/docs/contribute",
-            label: "Submit your template!",
+            label: "Add a template",
             position: "right",
             className: "button",
           },
@@ -191,20 +234,21 @@ const config = {
             from: "/docs/intro",
           },
           {
-            to: "/docs/faq/what-is-azd",
-            from: "/docs/faq/azd",
-          },
-          {
-            to: "/docs/faq/what-is-an-azd-template",
-            from: "/docs/faq/azd-template",
-          },
-          {
-            to: "/docs/faq/how-to-use-azd-templates",
-            from: "/docs/faq/use-azd-templates",
-          },
-          {
-            to: "/docs/faq/request-a-template",
-            from: "/docs/faq/request-template",
+            to: "/docs/faq",
+            from: [
+              "/docs/faq/azd",
+              "/docs/faq/what-is-azd",
+              "/docs/faq/azd-template",
+              "/docs/faq/what-is-an-azd-template",
+              "/docs/faq/use-azd-templates",
+              "/docs/faq/how-to-use-azd-templates",
+              "/docs/faq/request-template",
+              "/docs/faq/request-a-template",
+              "/docs/faq/discover-azd",
+              "/docs/faq/create-template",
+              "/docs/faq/contribute-template",
+              "/docs/faq/rate-template",
+            ],
           },
         ],
       },

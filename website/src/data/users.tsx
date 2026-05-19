@@ -17,7 +17,97 @@ import templates from '../../static/templates.json'
 // Add your site to this list
 // prettier-ignore
 
-export const unsortedUsers: User[] = templates as User[]
+// SECURITY: Runtime validation of JSON template data to catch malformed or
+// tampered entries before they reach the UI.
+function validateTemplates(raw: unknown): User[] {
+  if (!Array.isArray(raw)) {
+    console.warn('Templates data is not an array, returning empty list');
+    return [];
+  }
+  return (raw as Record<string, unknown>[]).filter((entry, i) => {
+    if (typeof entry !== 'object' || entry === null) {
+      console.warn(`Template[${i}]: not a valid object, skipping`);
+      return false;
+    }
+    const title = entry.title;
+    const description = entry.description;
+    const source = entry.source;
+    const author = entry.author;
+    const authorUrl = entry.authorUrl;
+    const tags = entry.tags;
+    if (typeof title !== 'string' || !title) {
+      console.warn(`Template[${i}]: missing or invalid 'title', skipping`);
+      return false;
+    }
+    if (typeof description !== 'string' || !description) {
+      console.warn(`Template[${i}]: missing or invalid 'description', skipping`);
+      return false;
+    }
+    if (typeof source !== 'string' || !source.startsWith('https://github.com/')) {
+      console.warn(`Template[${i}]: invalid 'source' URL "${source}", skipping`);
+      return false;
+    }
+    if (typeof author !== 'string' || !author) {
+      console.warn(`Template[${i}]: missing or invalid 'author', skipping`);
+      return false;
+    }
+    if (authorUrl != null && typeof authorUrl !== 'string') {
+      console.warn(`Template[${i}]: invalid 'authorUrl' type, skipping`);
+      return false;
+    }
+    // Coerce missing authorUrl to empty string for type safety
+    if (authorUrl == null) {
+      (entry as Record<string, unknown>).authorUrl = '';
+    }
+
+    const templateType = (entry as Record<string, unknown>).templateType;
+    const isExtensionEntry = typeof templateType === 'string' && templateType !== '';
+    if ((!Array.isArray(tags) || tags.length === 0) && !isExtensionEntry) {
+      console.warn(`Template[${i}]: missing or empty 'tags', skipping`);
+      return false;
+    }
+    return true;
+  }) as User[];
+}
+
+// Extension templates (e.g. `azd ai agent init` agents with
+// `templateType: "extension.ai.agent"`) live in the same templates.json
+// manifest so specialized `azd` flows can consume a single source of truth,
+// but they are NOT displayed in the awesome-azd gallery.
+//
+// Rule: any entry with a `templateType` set is treated as a non-gallery
+// (extension / specialized) entry. This means new extension categories are
+// hidden automatically without having to update the filter.
+//
+// Param is `Pick<User, 'templateType'>` so this helper works against either
+// validated `User` objects or raw JSON entries from `templates.json` (which
+// structurally satisfy `Pick` thanks to TS's structural typing), without
+// casting at the call site.
+export function isGalleryTemplate(entry: Pick<User, 'templateType'>): boolean {
+  return entry.templateType == null || entry.templateType === '';
+}
+
+export function filterGalleryTemplates<T extends Pick<User, 'templateType'>>(entries: T[]): T[] {
+  return entries.filter(isGalleryTemplate);
+}
+
+// Filter out entries with `templateType` set BEFORE gallery validation so
+// future extension categories that don't match the gallery schema (e.g.
+// missing `tags`, non-GitHub `source`) aren't silently dropped by
+// `validateTemplates`. This keeps the promise that adding a new extension
+// category is a data-only change.
+const rawGalleryTemplates = filterGalleryTemplates(
+  templates as Array<Record<string, unknown> & { templateType?: string }>
+);
+
+// Pre-filtered raw template entries for UI consumers (gallery counts,
+// language/service tallies, service landing pages). Using a single shared
+// constant guarantees `users.tsx` is the only place that decides what counts
+// as a gallery template — components never re-implement the filter.
+export const galleryTemplates: ReadonlyArray<Record<string, unknown>> =
+  rawGalleryTemplates;
+
+export const unsortedUsers: User[] = validateTemplates(rawGalleryTemplates);
 
 export const TagList = Object.keys(Tags) as TagType[];
 function sortUsers() {
